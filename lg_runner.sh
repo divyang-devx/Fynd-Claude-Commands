@@ -27,8 +27,14 @@ expect -c "
       send \"\r\"
       exp_continue
     }
+    -re {https://[^\r\n]+} {
+      set url \$expect_out(0,string)
+      log_user 0
+      puts \"\n🔗 Login URL (click to open):\n\033\]8;;\$url\033\\\\\$url\033\]8;;\033\\\\\n\"
+      log_user 1
+      exp_continue
+    }
     \"Open link on browser\" {
-      puts \"\n⏳ Waiting for organization selection in browser... (complete login in the opened tab)\n\"
       exp_continue
     }
     \"Timeout: Please run fdk login command again\" {
@@ -108,16 +114,7 @@ else
       \"Select accounts type\" {
         send \"$SELECT_KEYS\"
         puts \"\n⏳ Waiting for manual entries... (select company → sales channel → theme)\n\"
-        interact {
-          -output \"FDK-0004\" {
-            puts \"\n✖ Context with the same name already exists.\n   Rename it to include 'uat' or 'prod', then rerun /fy -lg or /fy -lgp.\n\"
-            exit 1
-          }
-          -output \"403\" {
-            puts \"\n✖ Not authorised. You may be logged into the wrong organisation.\n   Rerun /fy -lg or /fy -lgp to login with the correct account.\n\"
-            exit 1
-          }
-        }
+        interact
         catch wait result
         exit [lindex \$result 3]
       }
