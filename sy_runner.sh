@@ -106,16 +106,7 @@ else
       \"Select accounts type\" {
         send \"$SELECT_KEYS\"
         puts \"\n⏳ Waiting for manual entries... (select company → sales channel → theme)\n\"
-        interact {
-          -output \"FDK-0004\" {
-            puts \"\n✖ Context with the same name already exists.\n   Rename it to include 'uat' or 'prod', then rerun /fy -sy or /fy -syp.\n\"
-            exit 1
-          }
-          -output \"403\" {
-            puts \"\n✖ Not authorised. You may be logged into the wrong organisation.\n   Rerun /fy -sy or /fy -syp to login with the correct account.\n\"
-            exit 1
-          }
-        }
+        interact
         catch wait result
         exit [lindex \$result 3]
       }
@@ -186,6 +177,20 @@ expect -c "
   puts \"\n⏳ Starting fdk theme sync...\n\"
   spawn fdk theme sync
   interact
-  catch wait result
-  exit [lindex \$result 3]
+  catch wait sync_result
+  set sync_exit [lindex \$sync_result 3]
+
+  if {\$sync_exit != 0} {
+    puts \"\n✖ fdk theme sync failed (exit \$sync_exit). Stopping.\n\"
+    exit \$sync_exit
+  }
+
+  puts \"\n✔ Sync complete.\n\"
+  puts \"━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\"
+  puts \"▶ Step 4: fdk theme serve...\"
+  puts \"━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\n\"
+  spawn fdk theme serve
+  interact
+  catch wait serve_result
+  exit [lindex \$serve_result 3]
 " || exit 1
